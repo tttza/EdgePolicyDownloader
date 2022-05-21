@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32421.90
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EdgePolicyDownloader", "EdgePolicyDownloader\EdgePolicyDownloader.csproj", "{5CE3F8C7-D265-4CA9-ADB0-C99B42746D88}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5CE3F8C7-D265-4CA9-ADB0-C99B42746D88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5CE3F8C7-D265-4CA9-ADB0-C99B42746D88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5CE3F8C7-D265-4CA9-ADB0-C99B42746D88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5CE3F8C7-D265-4CA9-ADB0-C99B42746D88}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9182AA4E-FE88-4C25-90CC-5789F41C2FC7}
+	EndGlobalSection
+EndGlobal
