@@ -105,6 +105,39 @@ namespace EdgePolicyDownloader
 
             EdgeReleasesGrid.Columns["PublishedTime"].DefaultCellStyle.Padding = new Padding(5 ,0, 5, 0);
             EdgeReleasesGrid.Columns["PublishedTime"].DisplayIndex = 4;
+
+            var selectIndex = policyReleaseDatas.FindIndex(r => r.MajorVersion == latestVersion - 2);
+            EdgeReleasesGrid.Rows[selectIndex].Selected = true;
+
+        }
+
+        private void EdgeReleasesGrid_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            var cellIndex = EdgeReleasesGrid.Columns["ReleaseType"].Index;
+            foreach (DataGridViewRow row in EdgeReleasesGrid.Rows)
+            {   
+                var cell = row.Cells[cellIndex];
+                if ((string)cell.Value == "Stable") 
+                {
+                    cell.Style.BackColor = ColorTranslator.FromHtml("#FFFFFF");
+                }
+                else if (((string)cell.Value).Contains("Extended"))
+                {
+                    cell.Style.BackColor = ColorTranslator.FromHtml("#FFFFFF");
+                }
+                else if ((string)cell.Value == "Beta")
+                {
+                    cell.Style.BackColor = ColorTranslator.FromHtml("#8be2fd");
+                }
+                else if ((string)cell.Value == "Canary")
+                {
+                    cell.Style.BackColor = ColorTranslator.FromHtml("#f1c53e");
+                }
+                else if ((string)cell.Value == "EOS")
+                {
+                    cell.Style.BackColor = ColorTranslator.FromHtml("#dddddd");
+                }
+            }
         }
     }
 }

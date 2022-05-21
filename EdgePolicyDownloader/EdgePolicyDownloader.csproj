@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="EdgeInfo.cs" />
     <Compile Include="EdgeInfoDownloader.cs" />
+    <Compile Include="EdgeFileDownloader.cs" />
     <Compile Include="PolicyVersionSelector.cs">
       <SubType>Form</SubType>
     </Compile>
