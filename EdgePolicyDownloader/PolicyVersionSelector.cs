@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ namespace EdgePolicyDownloader
     {
 
         EdgeInfoDownloader edgeInfoDownloader = new EdgeInfoDownloader();
+        List<EdgeRelease> PolicyReleases = new List<EdgeRelease>();
 
         public PolicyVersionSelector()
         {
@@ -78,21 +80,26 @@ namespace EdgePolicyDownloader
 
         List<String> columnsToHide = new List<string>() { "Architecture", "Platform", "Artifacts", "ExpectedExpiryDate", "CVEs"};
 
-        private async void PolicyVersionSelector_LoadAsync(object sender, EventArgs e)
+        private async void PolicyVersionSelector_Shown(object sender, EventArgs e)
         {
-            var policyReleases = edgeInfoDownloader.GetEdgePolicyReleases();
+            UpdateInfo("Loading info from server...");
+            var policyReleaseDatas = new List<EdgeReleaseData>();
+            var latestVersion = 0;
+            await Task.Run(async () =>
+            {
+                PolicyReleases = await edgeInfoDownloader.GetEdgePolicyReleases();
 
-            var policyReleaseDatas = policyReleases.Select(release => new EdgeReleaseData(release)).ToList();
-
-            var latestStableVerReleasedDate = GetLatestMajorStableVersionReleasedData(policyReleaseDatas);
-            var latestVersion = policyReleaseDatas.Max(release => release.MajorVersion);
-            policyReleaseDatas.ForEach(release => release.AddReleaseType(latestVersion, latestStableVerReleasedDate));
-            
-
+                policyReleaseDatas = PolicyReleases.Select(release => new EdgeReleaseData(release)).ToList();
+                
+                latestVersion = policyReleaseDatas.Max(release => release.MajorVersion);
+                var latestStableVerReleasedDate = GetLatestMajorStableVersionReleasedData(policyReleaseDatas);
+                policyReleaseDatas.ForEach(release => release.AddReleaseType(latestVersion, latestStableVerReleasedDate));
+            });
             this.EdgeReleasesGrid.DataSource = policyReleaseDatas;
-            columnsToHide.ForEach(column => {
+            columnsToHide.ForEach(column =>
+            {
                 if (EdgeReleasesGrid.Columns.Contains(column)) EdgeReleasesGrid.Columns[column].Visible = false;
-             });
+            });
 
             EdgeReleasesGrid.Columns["MajorVersion"].DisplayIndex = 0;
             EdgeReleasesGrid.Columns["ReleaseType"].DisplayIndex = 1;
@@ -103,12 +110,12 @@ namespace EdgePolicyDownloader
 
             EdgeReleasesGrid.Columns["ReleaseId"].DisplayIndex = 3;
 
-            EdgeReleasesGrid.Columns["PublishedTime"].DefaultCellStyle.Padding = new Padding(5 ,0, 5, 0);
+            EdgeReleasesGrid.Columns["PublishedTime"].DefaultCellStyle.Padding = new Padding(5, 0, 5, 0);
             EdgeReleasesGrid.Columns["PublishedTime"].DisplayIndex = 4;
 
             var selectIndex = policyReleaseDatas.FindIndex(r => r.MajorVersion == latestVersion - 2);
             EdgeReleasesGrid.Rows[selectIndex].Selected = true;
-
+            UpdateInfo("");
         }
 
         private void EdgeReleasesGrid_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
@@ -137,6 +144,51 @@ namespace EdgePolicyDownloader
                 {
                     cell.Style.BackColor = ColorTranslator.FromHtml("#dddddd");
                 }
+            }
+        }
+
+        private Uri GetUriFromId(int id)
+        {
+            var selectedRelease = PolicyReleases.Find(p => p.ReleaseId == id);
+            var selectedUri = new Uri(selectedRelease.Artifacts.Find(a => a.ArtifactName == "cab").Location);
+            return selectedUri;
+
+        }
+        
+        private void UpdateInfo(string info)
+        {
+            InfoLabel.Text = info;
+        }
+        
+        private void DeployButton_Click(object sender, EventArgs e)
+        {
+           
+            var cellIndex = EdgeReleasesGrid.Columns["ReleaseId"].Index;
+            var selectedId = (int)EdgeReleasesGrid.SelectedRows[0].Cells[cellIndex].Value;
+            var selectedUri = GetUriFromId(selectedId);
+
+            UpdateInfo("Downloading file...");
+            var fileInfo = EdgeFileDownloader.DownloadFile(selectedUri);
+            if (fileInfo == null)
+            {
+                UpdateInfo("Failed to downloading file.");
+                return;
+            }
+
+            UpdateInfo("Extracting cab file...");
+            var zipFileInfo = DeployHelper.ExtractCab(fileInfo, fileInfo.Directory.ToString());
+            UpdateInfo("Extracting zip file...");
+            var dirInfo = DeployHelper.ExtractZip(zipFileInfo, Path.Combine(zipFileInfo.Directory.ToString(), "ext"));
+            UpdateInfo("Moving admx files to PolicyDefinitions directory. (Privilege Elevation is required. )");
+            var isSuccess = DeployHelper.MoveToPolicyDefinitions(dirInfo);
+
+            if (isSuccess)
+            {
+                UpdateInfo("Success.");
+            }
+            else
+            {
+                UpdateInfo("Failed to move admx files to PolicyDefinitions directory.");
             }
         }
     }

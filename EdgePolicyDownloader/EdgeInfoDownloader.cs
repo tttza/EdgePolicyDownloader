@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,11 +25,11 @@ namespace EdgePolicyDownloader
 
             return edgeInfos;
         }
-        public List<EdgeRelease> GetEdgePolicyReleases()
+        public async Task<List<EdgeRelease>> GetEdgePolicyReleases()
         {
             if (EdgeInfos.Count == 0)
             {
-                EdgeInfos = DownloadParseEdgeInfo().Result;
+                EdgeInfos = await DownloadParseEdgeInfo();
             }
             var edgeReleases = EdgeInfos.Find(e => e.Product == "Policy").Releases;
 

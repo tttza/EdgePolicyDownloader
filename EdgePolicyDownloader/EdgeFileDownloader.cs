@@ -10,9 +10,16 @@ namespace EdgePolicyDownloader
 {
     internal class EdgeFileDownloader
     {
-        public FileInfo DownloadFile(Uri uri)
+        public static string GetTemporaryDirectory()
         {
-            var tempFile = Path.GetTempFileName();
+            string tempDirectory = Path.Combine(Path.GetTempPath(), "EPD");
+            Directory.CreateDirectory(tempDirectory);
+            return tempDirectory;
+        }
+
+        public static FileInfo DownloadFile(Uri uri)
+        {
+            var tempFile = Path.Combine(GetTemporaryDirectory(), uri.ToString().Split('/').Last());
             using (var client = new WebClient())
             {
                 try
@@ -21,7 +28,8 @@ namespace EdgePolicyDownloader
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.Error.WriteLine(ex.Message);
+                    Console.Error.WriteLine(ex.InnerException);
                     return null;
                 }
             }
