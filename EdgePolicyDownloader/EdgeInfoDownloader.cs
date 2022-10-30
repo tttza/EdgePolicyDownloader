@@ -6,32 +6,45 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using HtmlAgilityPack;
+using Jurassic.Library;
 using Newtonsoft.Json;
+using RestSharp;
 
 namespace EdgePolicyDownloader
 {
      class EdgeInfoDownloader
     {
-        protected List<EdgeInfo> EdgeInfos { get; private set; } = new List<EdgeInfo>();
-        private async Task<List<EdgeInfo>> DownloadParseEdgeInfo()
+        protected EdgeInfo EdgeInfo { get; private set; } = new EdgeInfo();
+        private async Task<EdgeInfo> DownloadParseEdgeInfo()
         {
             HtmlWeb web = new HtmlWeb();
 
             string downloadUrl = Uri.EscapeUriString("https://www.microsoft.com/en-us/edge/business/download");
 
             var doc = web.Load(downloadUrl);
-            var infoJson = doc.GetElementbyId("commercial-json-data").GetAttributeValue("data-whole-json", "[]");
-            List<EdgeInfo> edgeInfos = JsonConvert.DeserializeObject<List<EdgeInfo>>(HttpUtility.HtmlDecode(infoJson));
+            var script = doc.DocumentNode.Descendants()
+                             .Where(n => n.Name == "script" & n.InnerText.Contains("window.__NUXT__="))
+                             .First().InnerText;
+            script = HttpUtility.HtmlDecode(script);
 
-            return edgeInfos;
+
+            var engine = new Jurassic.ScriptEngine();
+            var result = engine.Evaluate(script.Substring(16));
+            var infoJson = JSONObject.Stringify(engine, result).ToString();
+
+
+            //var infoJson = doc.GetElementbyId("commercial-json-data").GetAttributeValue("data-whole-json", "[]");
+            EdgeInfo edgeInfo = JsonConvert.DeserializeObject<EdgeInfo>(HttpUtility.HtmlDecode(infoJson));
+
+            return edgeInfo;
         }
-        public async Task<List<EdgeRelease>> GetEdgePolicyReleases()
+        public async Task<List<MajorRelease>> GetEdgePolicyReleases()
         {
-            if (EdgeInfos.Count == 0)
+            if (EdgeInfo.Data?.Length == 0)
             {
-                EdgeInfos = await DownloadParseEdgeInfo();
+                EdgeInfo = await DownloadParseEdgeInfo();
             }
-            var edgeReleases = EdgeInfos.Find(e => e.Product == "Policy").Releases;
+            var edgeReleases = EdgeInfo.Data.First().MajorReleases.ToList();
 
             return edgeReleases;
         }
